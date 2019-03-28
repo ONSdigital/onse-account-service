@@ -28,23 +28,26 @@ def test_get_account_when_account_is_found(account_repository):
 
 def test_create_account_when_customer_not_found(customer_client):
     account_repository = Mock()
-    account = Account(customer_id='12345', account_status='active')
 
     with pytest.raises(CustomerNotFound):
-        commands.create_account(account=account,
+        commands.create_account(customer_id=12345,
                                 account_repository=account_repository,
                                 customer_client=customer_client)
 
     assert not account_repository.store.called
 
 
-def test_create_account_stores_the_account(customer_client):
-    account_repository = Mock()
+def test_create_account_stores_the_account(customer_client,
+                                           account_repository):
     customer_client.add_customer_with_id('12345')
-    account = Account(customer_id='12345', account_status='active')
 
-    commands.create_account(account=account,
-                            account_repository=account_repository,
-                            customer_client=customer_client)
+    account_number = commands.create_account(
+        customer_id='12345',
+        account_repository=account_repository,
+        customer_client=customer_client)
 
-    account_repository.store.assert_called_with(account)
+    account = account_repository.fetch_by_account_number(int(account_number))
+
+    assert account.formatted_account_number == account_number
+    assert account.customer_id == '12345'
+    assert account.account_status == 'active'

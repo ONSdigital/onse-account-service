@@ -4,7 +4,6 @@ from flask import request, jsonify, Blueprint, current_app
 from schema import Schema, SchemaError, And
 
 from account_service.domain import commands
-from account_service.domain.account import Account
 from account_service.domain.errors import CustomerNotFound, AccountNotFound
 
 accounts = Blueprint('accounts', __name__, url_prefix='/accounts/')
@@ -32,19 +31,14 @@ def post_account():
 
     POST_ACCOUNT_PAYLOAD_SCHEMA.validate(body)
 
-    customer_id = body['customerId']
-
-    account = Account(account_status='active',
-                      customer_id=customer_id)
-
-    commands.create_account(
-        account=account,
+    account_no = commands.create_account(
+        customer_id=body['customerId'],
         account_repository=current_app.account_repository,
         customer_client=current_app.customer_client)
 
     return jsonify({
-        'customerId': customer_id,
-        'accountNumber': account.formatted_account_number,
+        'customerId': body['customerId'],
+        'accountNumber': account_no,
         'accountStatus': 'active'
     }), HTTPStatus.CREATED
 

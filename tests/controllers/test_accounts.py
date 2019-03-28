@@ -1,4 +1,3 @@
-from unittest import mock
 from unittest.mock import patch
 
 import pytest
@@ -45,18 +44,14 @@ def test_get_accounts_by_number_when_account_does_not_exist(get_account,
 @patch('account_service.domain.commands.create_account')
 def test_post_accounts(create_account, web_client, account_repository,
                        customer_client):
+    create_account.return_value = '99999999'
     request_body = {'customerId': '12345'}
 
     response = web_client.post('/accounts/', json=request_body)
 
-    create_account.assert_called_with(account=mock.ANY,
+    create_account.assert_called_with(customer_id='12345',
                                       account_repository=account_repository,
                                       customer_client=customer_client)
-
-    saved_account = create_account.mock_calls[0][2]['account']
-    assert saved_account.account_number is None
-    assert saved_account.account_status == 'active'
-    assert saved_account.customer_id == '12345'
 
     assert response.status_code == 201
     assert response.is_json
@@ -65,7 +60,7 @@ def test_post_accounts(create_account, web_client, account_repository,
 
     assert account['customerId'] == '12345'
     assert account['accountStatus'] == 'active'
-    assert account['accountNumber'] is None  # None because call is mocked
+    assert account['accountNumber'] == '99999999'
 
 
 @patch('account_service.domain.commands.create_account')
